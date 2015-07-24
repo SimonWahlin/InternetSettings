@@ -1,0 +1,11 @@
+
+[ClassVersion("1.0.0.0"), FriendlyName("ZoneSite")]
+class SimonW_ZoneSite : OMI_BaseResource
+{
+    [Key, Description("Address to configure, i.e. site.domain.com")] String Uri;
+    [Write, Description("Sets Uri to be Present or Absent on machine"), ValueMap{"Absent","Present"}, Values{"Absent","Present"}] String Ensure;
+    [Required, Description("Sets protocol to be added, use * for any"), ValueMap{"*","file","ftp","http","https","knownfolder","ldap","news","nntp","oecmd","shell","snews"}, Values{"*","file","ftp","http","https","knownfolder","ldap","news","nntp","oecmd","shell","snews"}] String Type;
+    [Required, Description("Specifies Zone"), ValueMap{"MyComputer","LocalIntranet","TrustedSite","Internet","Restricted"}, Values{"MyComputer","LocalIntranet","TrustedSite","Internet","Restricted"}] String Zone;
+    [Write, Description("Add for 32-bit, 64-bit or All applications"), ValueMap{"x86","x64","All"}, Values{"x86","x64","All"}] String Platform;
+};
+
