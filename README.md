@@ -1,3 +1,5 @@
+[![Build status](https://ci.appveyor.com/api/projects/status/c77k9ubitc25v2gv/branch/master?svg=true)](https://ci.appveyor.com/project/SimonWahlin/internetsettings/branch/master)
+
 # InternetSettings
 
 The **InternetSettings** module contains the **ZoneSite** resource, which adds or removes sites from zones for the current user in Internet Exporer Internet Settings.
