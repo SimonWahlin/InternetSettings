@@ -92,13 +92,13 @@ PrivateData = @{
     PSData = @{
 
         # Tags applied to this module. These help with module discovery in online galleries.
-        Tags = @('powershell','Internet','Settings','DSC')
+        Tags = @('Internet Explorer','Settings','DSC','Trusted Sites','Local Intranet')
 
         # A URL to the license for this module.
-        LicenseUri = 'http://www.github.com/'
+        LicenseUri = 'https://github.com/SimonWahlin/InternetSettings/blob/master/LICENSE.md'
 
         # A URL to the main website for this project.
-        ProjectUri = 'https://github.com/SimonWahlin/InternetSettings/blob/master/LICENSE.md'
+        ProjectUri = 'https://github.com/SimonWahlin/InternetSettings'
 
         # A URL to an icon representing this module.
         # IconUri = ''
