@@ -1,5 +1,6 @@
+init:
+    - cmd: cinst -y powershell -pre
 install: 
-    - cinst -y powershell -pre
     - cinst -y pester
     - git clone https://github.com/PowerShell/DscResource.Tests
 
