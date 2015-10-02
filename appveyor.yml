@@ -1,3 +1,5 @@
+os: unstable
+
 install: 
     - cinst -y pester
     - git clone https://github.com/PowerShell/DscResource.Tests
@@ -22,5 +24,13 @@ on_finish:
             # You can add other artifacts here
             (ls $zipFile)
         ) | % { Push-AppveyorArtifact $_.FullName }
+        $PSVersionTable
+        if(GCM Get-PackageProvider -EA SilentlyContinue)
+        {
         Get-PackageProvider -Name NuGet -ForceBootstrap
         Publish-Module -Name InternetSettings -NuGetApiKey $Env:PSGKey
+        }
+        else
+        {
+        'PSGallery not supported'
+        }
