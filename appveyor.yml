@@ -1,4 +1,5 @@
 install: 
+    - cinst -y powershell -pre
     - cinst -y pester
     - git clone https://github.com/PowerShell/DscResource.Tests
 
@@ -22,3 +23,5 @@ on_finish:
             # You can add other artifacts here
             (ls $zipFile)
         ) | % { Push-AppveyorArtifact $_.FullName }
+        Get-PackageProvider -Name NuGet -ForceBootstrap
+        Publish-Module -Name InternetSettings -NuGetApiKey $Env:PSGKey

@@ -25,7 +25,7 @@ configuration Sample_ZoneSite_AddToLocalIntranet
 
     Node $AllNodes.NodeName
     {
-        cZoneSite "${Uri}_${Zone}"
+        ZoneSite "${Uri}_${Zone}"
         {
             Ensure = 'Present'
             Uri = $Uri
