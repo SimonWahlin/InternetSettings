@@ -24,13 +24,31 @@ on_finish:
             # You can add other artifacts here
             (ls $zipFile)
         ) | % { Push-AppveyorArtifact $_.FullName }
-        $PSVersionTable
-        if(GCM Get-PackageProvider -EA SilentlyContinue)
+        # Build new module manifest
+        $Params = @{
+            ModuleVersion = $Env:APPVEYOR_BUILD_VERSION
+            GUID = 'ec680c47-4189-47a4-8273-69c2d4b6f7c7'
+            Author = 'Simon Wahlin'
+            CompanyName = 'Knowledge Factory'
+            Copyright = '(c) 2015 Simon Wahlin. All rights reserved.'
+            Description = 'Contains the ZoneSite resource, which adds or removes sites from zones for the current user in Internet Exporer Internet Settings.'
+            FunctionsToExport = '*'
+            CmdletsToExport = '*'
+            VariablesToExport = '*'
+            AliasesToExport = '*'
+            Tags = @('Internet', 'Explorer','Settings','DSC','Trusted', 'Sites','Local', 'Intranet', 'PSModule')
+            LicenseUri = 'https://github.com/SimonWahlin/InternetSettings/blob/master/LICENSE.md'
+            ProjectUri = 'https://github.com/SimonWahlin/InternetSettings'
+            ReleaseNotes = ($Env:APPVEYOR_REPO_COMMIT_MESSAGE, $Env:APPVEYOR_REPO_COMMIT_MESSAGE_EXTENDED -join "`n")
+        }
+        New-ModuleManifest -Path '.\InternetSettings.psd1' @Params        
+
+        if(Get-Command -Name Get-PackageProvider -ErrorAction SilentlyContinue)
         {
-        Get-PackageProvider -Name NuGet -ForceBootstrap
-        Publish-Module -Name InternetSettings -NuGetApiKey $Env:PSGKey
+            Get-PackageProvider -Name NuGet -ForceBootstrap
+            Publish-Module -Name InternetSettings -NuGetApiKey $Env:PSGKey
         }
         else
         {
-        'PSGallery not supported'
+            'PSGallery not supported'
         }
