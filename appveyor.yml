@@ -1,54 +1,51 @@
 os: unstable
 
+# Scripts that run after cloning
 install: 
     - cinst -y pester
     - git clone https://github.com/PowerShell/DscResource.Tests
-
-build: false
 
 test_script:
     - ps: |
         $testResultsFile = ".\TestsResults.xml"
         $res = Invoke-Pester -OutputFormat NUnitXml -OutputFile $testResultsFile -PassThru
-        (New-Object 'System.Net.WebClient').UploadFile("https://ci.appveyor.com/api/testresults/nunit/$($env:APPVEYOR_JOB_ID)", (Resolve-Path $testResultsFile))
+        Push-AppveyorArtifact $testResultsFile
         if ($res.FailedCount -gt 0) { 
             throw "$($res.FailedCount) tests failed."
         }
-on_finish:
-    - ps: |
-        $stagingDirectory = (Resolve-Path ..).Path
-        $zipFile = Join-Path $stagingDirectory "$(Split-Path $pwd -Leaf).zip"
-        Add-Type -assemblyname System.IO.Compression.FileSystem
-        [System.IO.Compression.ZipFile]::CreateFromDirectory($pwd, $zipFile)
-        @(
-            # You can add other artifacts here
-            (ls $zipFile)
-        ) | % { Push-AppveyorArtifact $_.FullName }
-        # Build new module manifest
-        $Params = @{
-            ModuleVersion = $Env:APPVEYOR_BUILD_VERSION
-            GUID = 'ec680c47-4189-47a4-8273-69c2d4b6f7c7'
-            Author = 'Simon Wahlin'
-            CompanyName = 'Knowledge Factory'
-            Copyright = '(c) 2015 Simon Wahlin. All rights reserved.'
-            Description = 'Contains the ZoneSite resource, which adds or removes sites from zones for the current user in Internet Exporer Internet Settings.'
-            FunctionsToExport = '*'
-            CmdletsToExport = '*'
-            VariablesToExport = '*'
-            AliasesToExport = '*'
-            Tags = @('Internet', 'Explorer','Settings','DSC','Trusted', 'Sites','Local', 'Intranet', 'PSModule')
-            LicenseUri = 'https://github.com/SimonWahlin/InternetSettings/blob/master/LICENSE.md'
-            ProjectUri = 'https://github.com/SimonWahlin/InternetSettings'
-            ReleaseNotes = ($Env:APPVEYOR_REPO_COMMIT_MESSAGE, $Env:APPVEYOR_REPO_COMMIT_MESSAGE_EXTENDED -join "`n")
-        }
-        New-ModuleManifest -Path '.\InternetSettings.psd1' @Params        
 
-        if(Get-Command -Name Get-PackageProvider -ErrorAction SilentlyContinue)
+build_script:
+    - ps: |
+        if($Env:APPVEYOR_REPO_TAG)
         {
-            Get-PackageProvider -Name NuGet -ForceBootstrap
-            Publish-Module -Name InternetSettings -NuGetApiKey $Env:PSGKey
-        }
-        else
-        {
-            'PSGallery not supported'
+            $stagingDirectory = (Resolve-Path ..).Path
+            # Build new module manifest
+            $Params = @{
+                ModuleVersion = $Env:APPVEYOR_REPO_TAG_NAME
+                GUID = 'ec680c47-4189-47a4-8273-69c2d4b6f7c7'
+                Author = 'Simon Wahlin'
+                CompanyName = 'Knowledge Factory'
+                Copyright = '(c) 2015 Simon Wahlin. All rights reserved.'
+                Description = 'Contains the ZoneSite resource, which adds or removes sites from zones for the current user in Internet Exporer Internet Settings.'
+                FunctionsToExport = '*'
+                CmdletsToExport = '*'
+                VariablesToExport = '*'
+                AliasesToExport = '*'
+                Tags = @('Internet', 'Explorer','Settings','DSC','Trusted', 'Sites','Local', 'Intranet', 'PSModule')
+                LicenseUri = 'https://github.com/SimonWahlin/InternetSettings/blob/master/LICENSE.md'
+                ProjectUri = 'https://github.com/SimonWahlin/InternetSettings'
+                ReleaseNotes = ($Env:APPVEYOR_REPO_COMMIT_MESSAGE, $Env:APPVEYOR_REPO_COMMIT_MESSAGE_EXTENDED -join "`n")
+            }
+            New-ModuleManifest -Path '.\InternetSettings.psd1' @Params        
+            Push-AppveyorArtifact '.\InternetSettings.psd1'
+
+            if(Get-Command -Name Get-PackageProvider -ErrorAction SilentlyContinue)
+            {
+                Get-PackageProvider -Name NuGet -ForceBootstrap
+                #Publish-Module -Name InternetSettings -NuGetApiKey $Env:PSGKey
+            }
+            else
+            {
+                'PSGallery not supported'
+            }
         }
