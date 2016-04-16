@@ -16,12 +16,13 @@ test_script:
 
 build_script:
     - ps: |
-        if($Env:APPVEYOR_REPO_TAG)
+        if($Env:APPVEYOR_REPO_TAG -eq 'True')
         {
             $stagingDirectory = (Resolve-Path ..).Path
             # Build new module manifest
+            if(){$NewVession = $Env:APPVEYOR_REPO_TAG_NAME}
             $Params = @{
-                ModuleVersion = $Env:APPVEYOR_REPO_TAG_NAME
+                ModuleVersion = 
                 GUID = 'ec680c47-4189-47a4-8273-69c2d4b6f7c7'
                 Author = 'Simon Wahlin'
                 CompanyName = 'Knowledge Factory'
