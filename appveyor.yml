@@ -1,4 +1,4 @@
-os: unstable
+os: "WMF 5"
 
 # Scripts that run after cloning
 install: 
@@ -16,13 +16,12 @@ test_script:
 
 build_script:
     - ps: |
-        if($Env:APPVEYOR_REPO_TAG -eq 'True')
+        if($Env:APPVEYOR_REPO_TAG -eq 'true')
         {
             $stagingDirectory = (Resolve-Path ..).Path
             # Build new module manifest
-            if(){$NewVession = $Env:APPVEYOR_REPO_TAG_NAME}
             $Params = @{
-                ModuleVersion = 
+                ModuleVersion = $Env:APPVEYOR_REPO_TAG_NAME
                 GUID = 'ec680c47-4189-47a4-8273-69c2d4b6f7c7'
                 Author = 'Simon Wahlin'
                 CompanyName = 'Knowledge Factory'
@@ -39,7 +38,6 @@ build_script:
             }
             New-ModuleManifest -Path '.\InternetSettings.psd1' @Params        
             Push-AppveyorArtifact '.\InternetSettings.psd1'
-
             if(Get-Command -Name Get-PackageProvider -ErrorAction SilentlyContinue)
             {
                 Get-PackageProvider -Name NuGet -ForceBootstrap
@@ -50,3 +48,7 @@ build_script:
                 'PSGallery not supported'
             }
         }
+        else{
+            "Commit is not a tag, skipping deploy!"
+        }
+        
