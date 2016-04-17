@@ -5,6 +5,38 @@ install:
     - cinst -y pester
     - git clone https://github.com/PowerShell/DscResource.Tests
 
+# Script to prepare for test 
+build_script:
+    - ps: |
+        #$stagingDirectory = (Resolve-Path ..).Path
+        # Build new module manifest
+        $ModuleVersion = if($Env:APPVEYOR_REPO_TAG -eq 'true')
+        {
+            $Env:APPVEYOR_REPO_TAG_NAME
+        }
+        else{
+            '0.{0}' -f $ENV:APPVEYOR_BUILD_VERSION
+        }
+        $Params = @{
+            ModuleVersion = $ModuleVersion
+            GUID = 'ec680c47-4189-47a4-8273-69c2d4b6f7c7'
+            Author = 'Simon Wahlin'
+            CompanyName = 'Knowledge Factory'
+            Copyright = '(c) 2015 Simon Wahlin. All rights reserved.'
+            Description = 'Contains the ZoneSite resource, which adds or removes sites from zones for the current user in Internet Exporer Internet Settings.'
+            FunctionsToExport = '*'
+            CmdletsToExport = '*'
+            VariablesToExport = '*'
+            AliasesToExport = '*'
+            Tags = @('Internet', 'Explorer','Settings','DSC','Trusted', 'Sites','Local', 'Intranet', 'PSModule')
+            LicenseUri = 'https://github.com/SimonWahlin/InternetSettings/blob/master/LICENSE.md'
+            ProjectUri = 'https://github.com/SimonWahlin/InternetSettings'
+            ReleaseNotes = ($Env:APPVEYOR_REPO_COMMIT_MESSAGE, $Env:APPVEYOR_REPO_COMMIT_MESSAGE_EXTENDED -join "`n")
+        }
+        New-ModuleManifest -Path '.\InternetSettings.psd1' @Params        
+        Push-AppveyorArtifact '.\InternetSettings.psd1'
+    
+# Custom test phase  
 test_script:
     - ps: |
         $testResultsFile = ".\TestsResults.xml"
@@ -14,30 +46,14 @@ test_script:
             throw "$($res.FailedCount) tests failed."
         }
 
-build_script:
+
+
+# Custom deploy phase
+deploy_script:
     - ps: |
         if($Env:APPVEYOR_REPO_TAG -eq 'true')
         {
-            $stagingDirectory = (Resolve-Path ..).Path
-            # Build new module manifest
-            $Params = @{
-                ModuleVersion = $Env:APPVEYOR_REPO_TAG_NAME
-                GUID = 'ec680c47-4189-47a4-8273-69c2d4b6f7c7'
-                Author = 'Simon Wahlin'
-                CompanyName = 'Knowledge Factory'
-                Copyright = '(c) 2015 Simon Wahlin. All rights reserved.'
-                Description = 'Contains the ZoneSite resource, which adds or removes sites from zones for the current user in Internet Exporer Internet Settings.'
-                FunctionsToExport = '*'
-                CmdletsToExport = '*'
-                VariablesToExport = '*'
-                AliasesToExport = '*'
-                Tags = @('Internet', 'Explorer','Settings','DSC','Trusted', 'Sites','Local', 'Intranet', 'PSModule')
-                LicenseUri = 'https://github.com/SimonWahlin/InternetSettings/blob/master/LICENSE.md'
-                ProjectUri = 'https://github.com/SimonWahlin/InternetSettings'
-                ReleaseNotes = ($Env:APPVEYOR_REPO_COMMIT_MESSAGE, $Env:APPVEYOR_REPO_COMMIT_MESSAGE_EXTENDED -join "`n")
-            }
-            New-ModuleManifest -Path '.\InternetSettings.psd1' @Params        
-            Push-AppveyorArtifact '.\InternetSettings.psd1'
+            
             if(Get-Command -Name Get-PackageProvider -ErrorAction SilentlyContinue)
             {
                 Get-PackageProvider -Name NuGet -ForceBootstrap
@@ -51,4 +67,3 @@ build_script:
         else{
             "Commit is not a tag, skipping deploy!"
         }
-        
