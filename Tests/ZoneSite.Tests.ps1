@@ -2,9 +2,10 @@
 Remove-Module -Name SimonW_ZoneSite -Force -ErrorAction SilentlyContinue
 Import-Module -Name $Module -Force -ErrorAction Stop
 
-InModuleScope SimonW_ZoneSite {
-    
-    Describe 'SimonW_ZoneSite' {
+Describe 'SimonW_ZoneSite' {
+        
+    InModuleScope -ModuleName SimonW_ZoneSite -ScriptBlock {
+        
         Context Get-ZoneSiteName {
             It 'Returns only address-part of URI for http Uri' {
                 Get-ZoneSiteName -Uri 'http://site.domain.top/something/page.html' | Should Be 'site.domain.top'
@@ -15,8 +16,10 @@ InModuleScope SimonW_ZoneSite {
             It 'Returns all of an FQDN' {
                 Get-ZoneSiteName -Uri 'server.domain.top' | Should Be 'server.domain.top'
             }
-            It 'Returns only server part of UNC path' {
+            It 'Returns only server part of FQDN UNC path' {
                 Get-ZoneSiteName -Uri '\\server.domain.top\Share\folder\file.ext' | Should Be 'server.domain.top'
+            }
+            It 'Returns only server part of netbios UNC path' {
                 Get-ZoneSiteName -Uri '\\server\Share\folder\file.ext' | Should Be 'server'
             }
             It 'Throws on invalid Uri' {
@@ -38,21 +41,36 @@ InModuleScope SimonW_ZoneSite {
                 Get-ItemPropertyPath -Uri 'ftp://site.domain.top/something/file.ext' -Platform 'x86' | Should be 'HKCU:\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Internet Settings\ZoneMap\Domains\domain.top\site'
             }
         }
-        
+
         Context Test-TargetResource {
-            $Uri  = '\\server.doman.top\share\folder'
-            $Type = '*'
-            $Zone = 'LocalIntranet'
-            
-            It 'Returns true if reg entry exists' {
-                mock Get-ItemProperty { [pscustomobject]@{$Type = $ZoneList[$Zone]} }
-                Test-TargetResource -Uri $Uri -Ensure Present -Type $Type -Zone $Zone -Platform x86 | Should Be $true
+          
+            $Type = 'ftp'
+            $Zone = 'Restricted'
+            $Uris = @{
+                'exists' = 'ftp://existing.really.long.sub.domain.simonw.se'
+                'doesn''t exist' = 'ftp://nonexisting.really.long.sub.domain.simonw.se'
+            }
+                
+            Mock Get-ItemProperty -MockWith {}
+            Mock Get-ItemProperty -ParameterFilter {
+              $Path -like '*\existing.really.long.sub.domain'
+            } -MockWith {
+                [pscustomobject]@{
+                    ftp = 4
+                }
             }
 
-            It 'Returns false if reg entry doesn''t exist' {
-                mock Get-ItemProperty {}
-                Test-TargetResource -Uri $Uri -Ensure Present -Type $Type -Zone $Zone -Platform x86 | Should Be $false
+            foreach($Platform in 'x86','x64','All') {
+                foreach ($key in $Uris.Keys) {
+                    foreach($Ensure in @('Present','Absent'))
+                    {
+                        It "Returns $($key -like 'exists' -xor $Ensure -eq 'Absent') if reg entry $key in $Platform when Ensure = $Ensure" {
+                            SimonW_ZoneSite\Test-TargetResource -Uri $Uris[$key] -Ensure $Ensure -Type $Type -Zone $Zone -Platform $Platform | Should Be $($key -like 'exists' -xor $Ensure -eq 'Absent')
+                        } 
+                    }
+                }
             }
         }
     }
 }
+

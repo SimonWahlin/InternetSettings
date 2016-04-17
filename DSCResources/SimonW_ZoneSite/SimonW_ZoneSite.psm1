@@ -124,43 +124,40 @@ function Get-TargetResource
         Type = $Type
         Zone = $Zone
     }
-    $x86Path = Get-ItemPropertyPath -Uri $Uri -Platform x86
-    $x64Path = Get-ItemPropertyPath -Uri $Uri -Platform x64
-    if($RegValue = Get-ItemProperty -Path $x86Path -Name $Type -ErrorAction SilentlyContinue)
+    $Path = @{
+        x86 = Get-ItemPropertyPath -Uri $Uri -Platform x86
+        x64 = Get-ItemPropertyPath -Uri $Uri -Platform x64
+    }
+    $IsPresent = @{
+        x86 = $false
+        x64 = $false
+    }
+    foreach($Entry in $Path.Keys)
     {
-        if($RegValue.$Type -eq $ZoneList[$Zone])
+        if($RegValue = Get-ItemProperty -Path $Path[$Entry] -Name $Type -ErrorAction SilentlyContinue)
         {
-            $x86Present = $true
-        }
-        else
-        {
-            $x86Present = $true
+            if($RegValue.$Type -eq $ZoneList[$Zone])
+            {
+                $IsPresent[$Entry] = $true
+            }
+            else
+            {
+                $IsPresent[$Entry] = $true
+            }
         }
     }
     
-    if($RegValue = Get-ItemProperty -Path $x64Path -Name $Type -ErrorAction SilentlyContinue)
-    {
-        if($RegValue.$Type -eq $ZoneList[$Zone])
-        {
-            $x64Present = $true
-        }
-        else
-        {
-            $x64Present = $true
-        }
-    }
-    
-    if($x86Present -and $x64Present)
+    if($IsPresent.Values -notcontains $false)
     {
         $returnValue['Ensure']   = 'Present'
         $returnValue['Platform'] = 'All'
     }
-    elseif($x86Present)
+    elseif($IsPresent['x86'])
     {
         $returnValue['Ensure']   = 'Present'
         $returnValue['Platform'] = 'x86'
     }
-    elseif($x64Present)
+    elseif($IsPresent['x64'])
     {
         $returnValue['Ensure']   = 'Present'
         $returnValue['Platform'] = 'x64'
@@ -172,8 +169,6 @@ function Get-TargetResource
     }
    
     return $returnValue
-
-
 }
 
 

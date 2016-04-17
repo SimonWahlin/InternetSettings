@@ -1,15 +1,14 @@
 os: "WMF 5"
 
 # Scripts that run after cloning
-install: 
+install:
     - cinst -y pester
     - git clone https://github.com/PowerShell/DscResource.Tests
 
-# Script to prepare for test 
+# Script to prepare for test
 build_script:
     - ps: |
-        #$stagingDirectory = (Resolve-Path ..).Path
-        # Build new module manifest
+        'Build new module manifest'
         $ModuleVersion = if($Env:APPVEYOR_REPO_TAG -eq 'true')
         {
             $Env:APPVEYOR_REPO_TAG_NAME
@@ -37,14 +36,16 @@ build_script:
         Import-Module .\DscResource.Tests\MetaFixers.psm1
         Get-UnicodeFilesList $pwd | ConvertTo-UTF8
         Push-AppveyorArtifact '.\InternetSettings.psd1'
-    
-# Custom test phase  
+
+# Custom test phase
 test_script:
     - ps: |
+        'Running tests'
         $testResultsFile = ".\TestsResults.xml"
         $res = Invoke-Pester -OutputFormat NUnitXml -OutputFile $testResultsFile -PassThru
         Push-AppveyorArtifact $testResultsFile
-        if ($res.FailedCount -gt 0) { 
+        if ($res.FailedCount -gt 0)
+        {
             throw "$($res.FailedCount) tests failed."
         }
 
@@ -53,19 +54,20 @@ test_script:
 # Custom deploy phase
 deploy_script:
     - ps: |
+        'Running deploy'
         if($Env:APPVEYOR_REPO_TAG -eq 'true')
         {
-            
             if(Get-Command -Name Get-PackageProvider -ErrorAction SilentlyContinue)
             {
                 Get-PackageProvider -Name NuGet -ForceBootstrap
-                #Publish-Module -Name InternetSettings -NuGetApiKey $Env:PSGKey
+                Publish-Module -Name InternetSettings -NuGetApiKey $Env:PSGKey
             }
             else
             {
                 'PSGallery not supported'
             }
         }
-        else{
+        else
+        {
             "Commit is not a tag, skipping deploy!"
         }
