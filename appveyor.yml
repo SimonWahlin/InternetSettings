@@ -33,7 +33,9 @@ build_script:
             ProjectUri = 'https://github.com/SimonWahlin/InternetSettings'
             ReleaseNotes = ($Env:APPVEYOR_REPO_COMMIT_MESSAGE, $Env:APPVEYOR_REPO_COMMIT_MESSAGE_EXTENDED -join "`n")
         }
-        New-ModuleManifest -Path '.\InternetSettings.psd1' @Params        
+        New-ModuleManifest -Path '.\InternetSettings.psd1' @Params
+        Import-Module .\DscResource.Tests\MetaFixers.psm1
+        Get-UnicodeFilesList $pwd | ConvertTo-UTF8
         Push-AppveyorArtifact '.\InternetSettings.psd1'
     
 # Custom test phase  
